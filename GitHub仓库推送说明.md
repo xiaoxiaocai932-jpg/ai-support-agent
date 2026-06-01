@@ -13,6 +13,24 @@ GitHub 不是运行服务器，真正运行项目的是 Render。
 
 当前项目已经初始化为 Git 仓库。
 
+当前 GitHub 仓库：
+
+```text
+https://github.com/xiaoxiaocai932-jpg/ai-support-agent
+```
+
+仓库状态：
+
+```text
+private
+```
+
+默认分支：
+
+```text
+main
+```
+
 已确认不会提交：
 
 ```text
