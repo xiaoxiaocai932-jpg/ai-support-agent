@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: ai-support-agent
+    runtime: node
+    plan: starter
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 24.14.1
+      - key: DATABASE_DIR
+        value: /var/data
+      - key: ARK_BASE_URL
+        value: https://ark.cn-beijing.volces.com/api/v3
+      - key: ARK_API_KEY
+        sync: false
+      - key: ARK_MODEL
+        sync: false
+    disk:
+      name: support-agent-data
+      mountPath: /var/data
+      sizeGB: 1
