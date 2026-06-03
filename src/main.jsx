@@ -26,6 +26,14 @@ const examples = [
   "系统无法同步客户数据怎么处理？",
 ];
 
+const createClientId = () => {
+  if (globalThis.crypto?.randomUUID) {
+    return globalThis.crypto.randomUUID();
+  }
+
+  return `client-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+};
+
 const askAgent = async (question) => {
   const response = await fetch("/api/ask", {
     method: "POST",
@@ -202,13 +210,13 @@ const getDashboard = async () => {
 };
 
 const createUserMessage = (content) => ({
-  id: crypto.randomUUID(),
+  id: createClientId(),
   role: "user",
   content,
 });
 
 const createAssistantMessage = (result) => ({
-  id: crypto.randomUUID(),
+  id: createClientId(),
   role: "assistant",
   result,
   ticket: null,
@@ -216,7 +224,7 @@ const createAssistantMessage = (result) => ({
 });
 
 const createTicketFollowupMessage = (ticket) => ({
-  id: crypto.randomUUID(),
+  id: createClientId(),
   role: "assistant",
   result: {
     answer: "已把你的补充说明同步给客服，工单已回到处理中。客服会基于最新说明继续跟进。",
@@ -417,7 +425,7 @@ function HelpCenterApp() {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([
     {
-      id: crypto.randomUUID(),
+      id: createClientId(),
       role: "assistant",
       result: {
         answer:
