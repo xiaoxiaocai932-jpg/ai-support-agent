@@ -34,6 +34,14 @@ const createClientId = () => {
   return `client-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 };
 
+const formatRequestError = (error, fallbackMessage) => {
+  if (error instanceof TypeError && error.message === "Failed to fetch") {
+    return `${fallbackMessage}，请检查网络后重试。`;
+  }
+
+  return error?.message || fallbackMessage;
+};
+
 const askAgent = async (question) => {
   const response = await fetch("/api/ask", {
     method: "POST",
@@ -563,7 +571,7 @@ function HelpCenterApp() {
       const data = await getTicket(targetMessage.ticket.id);
       updateAssistantMessage(messageId, (message) => ({ ...message, ticket: data.ticket }));
     } catch (requestError) {
-      setError(requestError.message);
+      setError(formatRequestError(requestError, "暂时无法刷新处理进展"));
     } finally {
       setRefreshingTicketFor("");
     }
@@ -1101,6 +1109,7 @@ function WorkspaceApp() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isSendingReply, setIsSendingReply] = useState(false);
   const [error, setError] = useState("");
+  const [replyNotice, setReplyNotice] = useState("");
 
   const selectedTicket = useMemo(
     () => tickets.find((ticket) => ticket.id === selectedTicketId) || tickets[0],
@@ -1125,6 +1134,10 @@ function WorkspaceApp() {
   useEffect(() => {
     loadTickets();
   }, []);
+
+  useEffect(() => {
+    setReplyNotice("");
+  }, [selectedTicket?.id]);
 
   useEffect(() => {
     if (!selectedTicket || replyDrafts[selectedTicket.id]) return;
@@ -1177,15 +1190,27 @@ function WorkspaceApp() {
   };
 
   const handleReplyDraftChange = (ticketId, value) => {
+    setReplyNotice("");
     setReplyDrafts((currentDrafts) => ({ ...currentDrafts, [ticketId]: value }));
   };
 
   const handleSendReply = async () => {
     if (!selectedTicket) return;
 
-    const content = replyDrafts[selectedTicket.id] || "";
+    if (draftLoadingTickets[selectedTicket.id]) {
+      setReplyNotice("回复草稿还在生成中，请稍后再发送。");
+      return;
+    }
+
+    const content = (replyDrafts[selectedTicket.id] || "").trim();
+    if (!content) {
+      setReplyNotice("请先输入回复内容，再发送给客户。");
+      return;
+    }
+
     setIsSendingReply(true);
     setError("");
+    setReplyNotice("正在发送回复...");
 
     try {
       const data = await sendTicketReply(selectedTicket.id, content);
@@ -1196,8 +1221,9 @@ function WorkspaceApp() {
         ...currentDrafts,
         [selectedTicket.id]: "",
       }));
+      setReplyNotice("回复已发送，工单已进入待客户确认。客户侧刷新处理进展后可以看到本次回复。");
     } catch (requestError) {
-      setError(requestError.message);
+      setReplyNotice(formatRequestError(requestError, "回复发送失败"));
     } finally {
       setIsSendingReply(false);
     }
@@ -1333,7 +1359,8 @@ function WorkspaceApp() {
                   rows={6}
                   placeholder={draftLoadingTickets[selectedTicket.id] ? "正在生成回复草稿..." : "输入回复内容"}
                 />
-                <button type="button" onClick={handleSendReply} disabled={isSendingReply || !(replyDrafts[selectedTicket.id] || "").trim()}>
+                {replyNotice && <div className="replyNotice">{replyNotice}</div>}
+                <button type="button" onClick={handleSendReply} disabled={isSendingReply}>
                   {isSendingReply ? <Loader2 className="spin" size={16} /> : <Send size={16} />}
                   发送回复
                 </button>

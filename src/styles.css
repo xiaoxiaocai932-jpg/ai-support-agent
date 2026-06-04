@@ -659,6 +659,16 @@ button:disabled {
   box-shadow: 0 0 0 3px rgba(39, 109, 104, 0.13);
 }
 
+.replyNotice {
+  border: 1px solid #c9ddea;
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #234155;
+  background: #eef7fb;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
 .replyComposer button {
   display: inline-flex;
   align-items: center;
